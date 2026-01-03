@@ -17,10 +17,28 @@ async function initializeGame() {
         return;
     }
 
-    const game = new CesiumVehicleGame('cesiumContainer');
+    const params = new URLSearchParams(window.location.search);
+    const modeParam = params.get('mode');
+    const startMode = modeParam === 'drive' ? 'drive' : 'flight';
+    const carModelUrl = params.get('carModel') || params.get('droneModel') || undefined;
+    const aircraftModelUrl = params.get('aircraftModel') || params.get('shipModel') || undefined;
+    const carScaleParam = parseFloat(params.get('carScale') || '');
+    const aircraftScaleParam = parseFloat(params.get('aircraftScale') || '');
+
+    const vehicleOverrides = {
+        ...(carModelUrl ? { carModelUrl } : {}),
+        ...(aircraftModelUrl ? { aircraftModelUrl } : {}),
+        ...(Number.isFinite(carScaleParam) ? { carScale: carScaleParam } : {}),
+        ...(Number.isFinite(aircraftScaleParam) ? { aircraftScale: aircraftScaleParam } : {}),
+    };
+
+    const game = new CesiumVehicleGame('cesiumContainer', {
+        startMode,
+        vehicleOverrides,
+    });
 
     console.log('🎬 Starting cinematic sequence...');
-    await game.startCinematicSequence();
+    await game.startCinematicSequence(startMode);
 
     console.log('🌉 Creating game bridge...');
     const gameBridge = new GameBridge(game);
@@ -43,4 +61,3 @@ async function initializeGame() {
 initializeGame().catch(error => {
     console.error('Failed to start Cesium Vehicle Game:', error);
 });
-

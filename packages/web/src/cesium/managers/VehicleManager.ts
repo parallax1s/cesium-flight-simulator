@@ -11,15 +11,24 @@ const DEFAULT_SPAWN_LOCATION = {
   lat: 57.7089
 };
 
+export interface VehicleModelOverrides {
+  carModelUrl?: string;
+  carScale?: number;
+  aircraftModelUrl?: string;
+  aircraftScale?: number;
+}
+
 export class VehicleManager implements Updatable {
   private vehicles: Map<string, Vehicle> = new Map();
   private activeVehicle: Vehicle | null = null;
   private scene: Scene;
   private onVehicleChangeCallback: ((vehicle: Vehicle) => void) | null = null;
   private onVehicleChangeCallbacks: Array<(vehicle: Vehicle) => void> = [];
+  private modelOverrides: VehicleModelOverrides;
 
-  constructor(scene: Scene) {
+  constructor(scene: Scene, overrides: VehicleModelOverrides = {}) {
     this.scene = scene;
+    this.modelOverrides = overrides;
   }
 
   private async addVehicle(vehicle: Vehicle): Promise<void> {
@@ -144,12 +153,12 @@ export class VehicleManager implements Updatable {
     const spawnPosition = position || Cesium.Cartesian3.fromDegrees(
       DEFAULT_SPAWN_LOCATION.lng,
       DEFAULT_SPAWN_LOCATION.lat,
-      100
+      60
     );
     
     const car = new Car(id, {
-      modelUrl: './walter.glb',
-      scale: 10,
+      modelUrl: this.modelOverrides.carModelUrl || './walter.glb',
+      scale: this.modelOverrides.carScale ?? 10,
       position: spawnPosition,
       heading,
       modelHeadingOffset: Cesium.Math.toRadians(90)
@@ -168,8 +177,8 @@ export class VehicleManager implements Updatable {
     );
     
     const aircraft = new Aircraft(id, {
-      modelUrl: './plane.glb',
-      scale: 5,
+      modelUrl: this.modelOverrides.aircraftModelUrl || './plane.glb',
+      scale: this.modelOverrides.aircraftScale ?? 5,
       position: spawnPosition,
       heading
     });

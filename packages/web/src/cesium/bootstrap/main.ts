@@ -1,12 +1,17 @@
 import * as Cesium from 'cesium';
 import { Scene } from '../core/Scene';
 import { GameLoop } from '../core/GameLoop';
-import { VehicleManager } from '../managers/VehicleManager';
+import { VehicleManager, VehicleModelOverrides } from '../managers/VehicleManager';
 import { CameraManager } from '../managers/CameraManager';
 import { InputManager } from '../input/InputManager';
 import { ObjectManager } from '../builder/ObjectManager';
 import { PlacementController } from '../builder/PlacementController';
 import { TouchInputManager } from '../input/TouchInputManager';
+
+export interface GameConfig {
+  startMode?: 'flight' | 'drive';
+  vehicleOverrides?: VehicleModelOverrides;
+}
 
 export class CesiumVehicleGame {
   private scene: Scene;
@@ -17,15 +22,17 @@ export class CesiumVehicleGame {
   private objectManager: ObjectManager;
   private placementController: PlacementController;
   private touchInputManager: TouchInputManager | null = null;
+  private startMode: 'flight' | 'drive';
 
-  constructor(containerId: string = "cesiumContainer") {
+  constructor(containerId: string = "cesiumContainer", config: GameConfig = {}) {
     this.scene = new Scene(containerId);
     this.gameLoop = new GameLoop(this.scene);
-    this.vehicleManager = new VehicleManager(this.scene);
+    this.vehicleManager = new VehicleManager(this.scene, config.vehicleOverrides);
     this.cameraManager = new CameraManager(this.scene.camera);
     this.inputManager = new InputManager();
     this.objectManager = new ObjectManager(this.scene.viewer);
     this.placementController = new PlacementController(this.scene.viewer, this.objectManager);
+    this.startMode = config.startMode || 'flight';
 
     this.setupSystems();
     this.setupInputHandling();
@@ -92,8 +99,13 @@ export class CesiumVehicleGame {
     console.log('📱 Touch controls initialized');
   }
 
-  public async startCinematicSequence(): Promise<void> {
-    const spawnPosition = Cesium.Cartesian3.fromDegrees(11.9746, 57.7089, 200);
+  public async startCinematicSequence(modeOverride?: 'flight' | 'drive'): Promise<void> {
+    const mode = modeOverride || this.startMode;
+    const spawnPosition = Cesium.Cartesian3.fromDegrees(
+      11.9746,
+      57.7089,
+      mode === 'drive' ? 80 : 200
+    );
     
     console.log('🎬 Starting cinematic sequence...');
     
@@ -103,9 +115,15 @@ export class CesiumVehicleGame {
     this.scene.stopEarthSpin();
     await this.scene.zoomToLocation(spawnPosition, 4500);
     
-    console.log('✈️ Spawning aircraft...');
-    const aircraft = await this.vehicleManager.spawnAircraft();
-    this.cameraManager.setTarget(aircraft);
+    if (mode === 'drive') {
+      console.log('🚗 Spawning car...');
+      const car = await this.vehicleManager.spawnCar();
+      this.cameraManager.setTarget(car);
+    } else {
+      console.log('✈️ Spawning aircraft...');
+      const aircraft = await this.vehicleManager.spawnAircraft();
+      this.cameraManager.setTarget(aircraft);
+    }
     this.start();
     
     console.log('🎮 Ready to fly!');
@@ -158,8 +176,8 @@ export class CesiumVehicleGame {
   }
 }
 
-export async function startCesiumVehicleGame(): Promise<CesiumVehicleGame> {
-  const game = new CesiumVehicleGame();
-  await game.startCinematicSequence();
+export async function startCesiumVehicleGame(config: GameConfig = {}): Promise<CesiumVehicleGame> {
+  const game = new CesiumVehicleGame('cesiumContainer', config);
+  await game.startCinematicSequence(config.startMode);
   return game;
 }
