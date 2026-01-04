@@ -67,6 +67,17 @@ async function initializeGame() {
 
     gameBridge.emit('gameReady', { ready: true });
 
+    window.addEventListener('message', (event) => {
+        const payload = event.data as { type?: string; kind?: string; code?: string };
+        if (!payload || payload.type !== 'skydash-cesium-input') return;
+        if (!payload.code) return;
+        if (payload.kind === 'keydown') {
+            game.getInputManager().handleExternalKey(payload.code, true);
+        } else if (payload.kind === 'keyup') {
+            game.getInputManager().handleExternalKey(payload.code, false);
+        }
+    });
+
     console.log('⚛️ Mounting React UI...');
     mountReactUI(gameBridge);
 

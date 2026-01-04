@@ -193,6 +193,21 @@ export class InputManager {
     return this.keyBindings;
   }
 
+  public handleExternalKey(code: string, pressed: boolean): void {
+    const action = this.keyBindings[code] as InputAction;
+    if (!action) return;
+
+    if (this.oneTimeActions.has(action)) {
+      if (pressed && !this.inputState[action]) {
+        this.setInputState(action, true);
+        setTimeout(() => this.setInputState(action, false), 0);
+      }
+      return;
+    }
+
+    this.setInputState(action, pressed);
+  }
+
   public setThrottlePercent(percent: number): void {
     this.throttlePercent = Math.max(0, Math.min(100, percent));
     
