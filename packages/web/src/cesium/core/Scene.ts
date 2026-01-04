@@ -49,9 +49,36 @@ export class Scene {
     this.clock = this.viewer.clock;
     this.primitives = this.scene.primitives;
 
+    this.setupFocusHandling();
     this.setupScene();
     this.setupPostProcessing();
     this.loadTerrain();
+  }
+
+  private setupFocusHandling(): void {
+    const canvas = this.viewer?.canvas;
+    if (!canvas) return;
+
+    canvas.setAttribute('tabindex', '0');
+    canvas.style.outline = 'none';
+
+    if (document.body) {
+      document.body.tabIndex = -1;
+    }
+
+    const focusCanvas = () => {
+      try {
+        window.focus();
+        document.body?.focus?.({ preventScroll: true });
+        canvas.focus({ preventScroll: true });
+      } catch (err) {
+        // Ignore focus failures.
+      }
+    };
+
+    canvas.addEventListener('pointerdown', focusCanvas);
+    canvas.addEventListener('mousedown', focusCanvas);
+    canvas.addEventListener('touchstart', focusCanvas);
   }
 
   private setupScene(): void {

@@ -8,6 +8,15 @@ export function IntroScreen() {
 
   if (!isVisible) return null;
 
+  const focusDocument = () => {
+    try {
+      window.focus();
+      document.body?.focus?.({ preventScroll: true });
+    } catch (err) {
+      // Ignore focus failures.
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[180] bg-black/60 backdrop-blur-lg flex items-center justify-center animate-fade-in">
       <div className="max-w-2xl w-full mx-4">
@@ -65,7 +74,12 @@ export function IntroScreen() {
           {/* Start Button */}
           <div className="flex justify-center pt-2">
             <Button
-              onClick={() => setIsVisible(false)}
+              onClick={() => {
+                setIsVisible(false);
+                requestAnimationFrame(() => {
+                  focusDocument();
+                });
+              }}
               variant="primary"
               size="lg"
               className="px-12"
@@ -174,5 +188,4 @@ function TouchControlRow({ icon, action, description }: TouchControlRowProps) {
     </div>
   );
 }
-
 

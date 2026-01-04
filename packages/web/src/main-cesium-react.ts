@@ -7,6 +7,28 @@ import './cesium.css';
 
 console.log('🎮 Modular Cesium Vehicle Game with React UI is starting...');
 
+function setupFocusHandling() {
+    if (typeof window === 'undefined') return;
+    if (document.body) {
+        document.body.tabIndex = -1;
+    }
+
+    const focusDocument = () => {
+        try {
+            window.focus();
+            document.body?.focus?.({ preventScroll: true });
+        } catch (err) {
+            // Ignore focus failures.
+        }
+    };
+
+    window.addEventListener('pointerdown', focusDocument);
+    window.addEventListener('mousedown', focusDocument);
+    window.addEventListener('touchstart', focusDocument);
+}
+
+setupFocusHandling();
+
 async function initializeGame() {
     if (!hasValidTokens()) {
         console.log('⚠️ Missing API tokens - showing setup UI...');
